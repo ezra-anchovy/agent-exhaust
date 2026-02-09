@@ -1,0 +1,37 @@
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+logs/
+*.log
+
+# Dev files
+.DS_Store
+backend/
+frontend/
+*.py
+*.pyc
+__pycache__/
+*.png
+*.jpg
+
+# Old scripts
+reclassify*.js
+*-reclassify*.js
+*-reclassify*.sh
+historical-sweep.js
+parallel-interpreter.js
+manual-synthesize.js
+dashboard-redesigner.js
+cognitive-interpreter.js
+mezzanine-synthesizer.js
+longterm-synthesizer.js
+backfill_*.py
+
+# Shell scripts
+*.sh
+
+# Progress files
+.reclassify-progress.json

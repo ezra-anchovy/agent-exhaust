@@ -1,0 +1,35 @@
+{
+  "name": "agent-exhaust",
+  "version": "0.1.0",
+  "description": "Cognitive exhaust dashboard for OpenClaw - see what your agent swarm actually did",
+  "main": "server.js",
+  "bin": {
+    "agent-exhaust": "./cli.js"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "watch": "node log-watcher.js",
+    "synthesize": "node fast-synthesize.js",
+    "longterm": "node fast-longterm.js",
+    "backfill": "node fast-backfill.js"
+  },
+  "keywords": [
+    "openclaw",
+    "agent",
+    "dashboard",
+    "telemetry",
+    "ai-agents"
+  ],
+  "author": "Anchovy Labs",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^9.4.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ezra-anchovy/agent-exhaust"
+  }
+}

@@ -151,6 +151,9 @@
 
     <section class="grid-2">
       <article class="panel">
+        <h2>1b. Live ACPX Sessions (Ezra + agents)</h2>
+        <div id="acpxSessions" class="panel"><em>Loading…</em></div>
+
         <h2>2b. Active Agent Sessions (last 1h)</h2>
         <div id="agentSessions" class="panel"><em>Loading…</em></div>
 
@@ -242,6 +245,35 @@
       `
     }
 
+    function renderAcpxSessions(section) {
+      const el = document.getElementById('acpxSessions')
+      if (!section || (!section.active.length && !section.recent_closed.length)) {
+        el.innerHTML = '<em class="muted">No ACPX sessions found.</em>'
+        return
+      }
+      let html = `<div class="meta">total=${section.total} | active=${section.active.length}</div>`
+      if (section.active.length) {
+        html += '<h3 style="color:var(--good);margin:8px 0 4px">● Running</h3>'
+        html += '<table><tr><th>Name</th><th>Agent</th><th>Working Dir</th><th>Last Updated</th></tr>'
+        for (const s of section.active) {
+          const ago = Math.round((Date.now() - new Date(s.updated)) / 60000)
+          const dir = s.cwd.replace('/Users/al/', '~/')
+          html += `<tr><td><strong>${s.name}</strong></td><td>${s.agent}</td><td class="mono" style="font-size:0.75em">${dir}</td><td>${ago}m ago</td></tr>`
+        }
+        html += '</table>'
+      }
+      if (section.recent_closed.length) {
+        html += '<h3 style="color:var(--muted);margin:8px 0 4px">Recently Completed</h3>'
+        html += '<table><tr><th>Name</th><th>Agent</th><th>Completed</th></tr>'
+        for (const s of section.recent_closed) {
+          const ago = Math.round((Date.now() - new Date(s.updated)) / 60000)
+          html += `<tr><td>${s.name}</td><td>${s.agent}</td><td>${ago}m ago</td></tr>`
+        }
+        html += '</table>'
+      }
+      el.innerHTML = html
+    }
+
     function renderAgentSessions(section) {
       const el = document.getElementById('agentSessions')
       if (!section || !section.sessions || section.sessions.length === 0) {
@@ -312,6 +344,7 @@
 
       renderAcp(data.active_acp_sessions)
       renderRotation(data.profile_rotation_status)
+      renderAcpxSessions(data.acpx_sessions)
       renderAgentSessions(data.active_agent_sessions)
       renderAgents(data.agent_status)
       renderProviders(data.provider_portfolio)

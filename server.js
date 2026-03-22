@@ -74,6 +74,32 @@ function pickLastTimestamp(events, fallbackMs) {
   return new Date(fallbackMs).toISOString()
 }
 
+function getAcpxSessions() {
+  const acpxCmd = '/Users/al/Library/pnpm/global/5/.pnpm/openclaw@2026.3.13_@discordjs+opus@0.10.0_@napi-rs+canvas@0.1.96_@types+express@5.0.6/node_modules/openclaw/extensions/acpx/node_modules/.bin/acpx'
+  const sessions = []
+  for (const agent of ['codex', 'claude']) {
+    try {
+      const out = execSync(`${acpxCmd} ${agent} sessions list 2>/dev/null`, { timeout: 10000, encoding: 'utf8', env: { ...process.env, PATH: (process.env.PATH || '') + ':/opt/homebrew/bin:/usr/local/bin' } })
+      for (const line of out.split('\n').filter(l => l.trim())) {
+        const parts = line.split('\t')
+        if (parts.length < 4) continue
+        const closed = parts[0].includes('[closed]')
+        const id = parts[0].replace(/\s*\[closed\]/, '').trim()
+        const name = parts[1].trim()
+        const cwd = parts[2].trim()
+        const updated = parts[3].trim()
+        sessions.push({ id, name, agent, cwd, updated, closed })
+      }
+    } catch { /* ignore */ }
+  }
+  const active = sessions.filter(s => !s.closed)
+  const recent = sessions.filter(s => {
+    const age = Date.now() - new Date(s.updated).getTime()
+    return age < 2 * 60 * 60 * 1000
+  })
+  return { active, recent_closed: recent.filter(s => s.closed).slice(0, 10), total: sessions.length }
+}
+
 function getActiveAgentSessions() {
   const now = Date.now()
   const ONE_HOUR_MS = 60 * 60 * 1000
@@ -1335,6 +1361,7 @@ const server = http.createServer((req, res) => {
     try {
       const payload = {
         active_acp_sessions: getActiveAcpSessions(),
+        acpx_sessions: getAcpxSessions(),
         active_agent_sessions: getActiveAgentSessions(),
         profile_rotation_status: getProfileRotationStatus(),
         agent_status: getAgentStatus(),

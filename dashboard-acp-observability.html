@@ -182,8 +182,8 @@
     }
 
     const API_BASE = window.location.hostname.includes('urclaw.com')
-      ? 'https://api.urclaw.com'
-      : 'http://localhost:8015';
+      ? ''
+      : 'http://localhost:3000';
 
     async function fetchJson(path) {
       const url = `${API_BASE}${path}`

@@ -76,10 +76,17 @@ function pickLastTimestamp(events, fallbackMs) {
 
 function getActiveAcpSessions() {
   const now = Date.now()
-  const roots = [
-    { agent: 'codex', dir: '/Users/al/.openclaw/agents/codex/sessions' },
-    { agent: 'claude', dir: '/Users/al/.openclaw/agents/claude/sessions' }
-  ]
+  // Scan ALL agent directories for ACP streams, not just codex/claude
+  const agentsBase = '/Users/al/.openclaw/agents'
+  const roots = []
+  try {
+    for (const name of fs.readdirSync(agentsBase)) {
+      const sessDir = path.join(agentsBase, name, 'sessions')
+      if (fs.existsSync(sessDir)) {
+        roots.push({ agent: name, dir: sessDir })
+      }
+    }
+  } catch { /* ignore */ }
   const sessions = []
   let filesScanned = 0
 

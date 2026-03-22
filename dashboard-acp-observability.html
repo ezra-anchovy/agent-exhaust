@@ -151,6 +151,9 @@
 
     <section class="grid-2">
       <article class="panel">
+        <h2>2b. Active Agent Sessions (last 1h)</h2>
+        <div id="agentSessions" class="panel"><em>Loading…</em></div>
+
         <h2>3. Agent Status</h2>
         <div class="stamp" id="agentMeta">No data</div>
         <div style="height:8px"></div>
@@ -239,6 +242,23 @@
       `
     }
 
+    function renderAgentSessions(section) {
+      const el = document.getElementById('agentSessions')
+      if (!section || !section.sessions || section.sessions.length === 0) {
+        el.innerHTML = '<em class="muted">No active agent sessions in the last hour.</em>'
+        return
+      }
+      let html = `<div class="meta">checked=${new Date(section.checked_at).toLocaleString()} | window=${section.window_minutes}m</div>`
+      html += '<table><tr><th>Agent</th><th>Session</th><th>Last Modified</th><th>Size</th><th>Status</th></tr>'
+      for (const s of section.sessions) {
+        const ago = Math.round((Date.now() - new Date(s.last_modified)) / 60000)
+        const status = s.is_active ? '<span class="good">● active</span>' : '<span class="muted">idle</span>'
+        html += `<tr><td><strong>${s.agent}</strong></td><td class="mono">${s.session_id.slice(0,8)}…</td><td>${new Date(s.last_modified).toLocaleString()} (${ago}m)</td><td>${s.size_kb}KB</td><td>${status}</td></tr>`
+      }
+      html += '</table>'
+      el.innerHTML = html
+    }
+
     function renderAgents(section) {
       document.getElementById('agentMeta').textContent = `source=${section?.source || 'unknown'} | checked=${fmtIso(section?.checked_at)}`
       const rows = Array.isArray(section?.agents) ? section.agents : []
@@ -292,6 +312,7 @@
 
       renderAcp(data.active_acp_sessions)
       renderRotation(data.profile_rotation_status)
+      renderAgentSessions(data.active_agent_sessions)
       renderAgents(data.agent_status)
       renderProviders(data.provider_portfolio)
 

@@ -1,0 +1,11 @@
+node_modules/
+agent_events.db
+agent_events.db-shm
+agent_events.db-wal
+*.pyc
+__pycache__/
+.DS_Store
+frontend/dist/
+backend/__pycache__/
+*.log
+shadow/

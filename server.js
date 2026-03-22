@@ -74,6 +74,43 @@ function pickLastTimestamp(events, fallbackMs) {
   return new Date(fallbackMs).toISOString()
 }
 
+function getActiveAgentSessions() {
+  const now = Date.now()
+  const ONE_HOUR_MS = 60 * 60 * 1000
+  const agentsBase = '/Users/al/.openclaw/agents'
+  const sessions = []
+
+  try {
+    for (const agentName of fs.readdirSync(agentsBase)) {
+      if (agentName.startsWith('.')) continue
+      const sessDir = path.join(agentsBase, agentName, 'sessions')
+      if (!fs.existsSync(sessDir)) continue
+      
+      let files
+      try { files = fs.readdirSync(sessDir) } catch { continue }
+      
+      for (const f of files) {
+        if (!f.endsWith('.jsonl') || f.includes('.acp-stream.')) continue
+        const fp = path.join(sessDir, f)
+        let stat
+        try { stat = fs.statSync(fp) } catch { continue }
+        if (!stat.isFile() || (now - stat.mtimeMs) > ONE_HOUR_MS) continue
+        
+        sessions.push({
+          agent: agentName,
+          session_id: path.basename(f, '.jsonl'),
+          last_modified: new Date(stat.mtimeMs).toISOString(),
+          is_active: (now - stat.mtimeMs) <= 5 * 60 * 1000,
+          size_kb: Math.round(stat.size / 1024)
+        })
+      }
+    }
+  } catch { /* ignore */ }
+
+  sessions.sort((a, b) => new Date(b.last_modified) - new Date(a.last_modified))
+  return { checked_at: new Date(now).toISOString(), window_minutes: 60, sessions: sessions.slice(0, 20) }
+}
+
 function getActiveAcpSessions() {
   const now = Date.now()
   // Scan ALL agent directories for ACP streams, not just codex/claude
@@ -1298,6 +1335,7 @@ const server = http.createServer((req, res) => {
     try {
       const payload = {
         active_acp_sessions: getActiveAcpSessions(),
+        active_agent_sessions: getActiveAgentSessions(),
         profile_rotation_status: getProfileRotationStatus(),
         agent_status: getAgentStatus(),
         provider_portfolio: getProviderPortfolio(),

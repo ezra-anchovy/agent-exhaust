@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Founder ACP Observability</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #070b11;
+      --bg-2: #0d1320;
+      --panel: rgba(17, 25, 39, 0.9);
+      --panel-strong: rgba(20, 31, 51, 0.96);
+      --line: rgba(138, 164, 205, 0.28);
+      --text: #ecf3ff;
+      --muted: #9db3d3;
+      --good: #5ee8a2;
+      --warn: #ffd37a;
+      --bad: #ff7d91;
+      --info: #77b3ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      background:
+        radial-gradient(900px 460px at 90% -12%, rgba(31, 224, 207, 0.18), transparent 56%),
+        radial-gradient(920px 640px at -12% 8%, rgba(255, 125, 145, 0.16), transparent 58%),
+        linear-gradient(165deg, #05080e 0%, #0b111c 45%, #10192a 100%);
+      padding: 16px;
+    }
+
+    .page { max-width: 1560px; margin: 0 auto; display: grid; gap: 12px; }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.32);
+      overflow: auto;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--panel-strong), rgba(11, 18, 32, 0.95));
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1.4fr 1fr;
+      align-items: end;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.35rem, 2.4vw, 2.2rem); letter-spacing: 0.02em; }
+    .subtitle { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .controls { display: grid; gap: 8px; justify-items: end; }
+    .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(7, 14, 26, 0.74);
+      color: var(--text);
+      padding: 7px 10px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.66rem;
+      border: 1px solid var(--line);
+    }
+
+    .chip.good { color: var(--good); border-color: rgba(94, 232, 162, 0.45); background: rgba(94, 232, 162, 0.14); }
+    .chip.warn { color: var(--warn); border-color: rgba(255, 211, 122, 0.5); background: rgba(255, 211, 122, 0.14); }
+    .chip.bad { color: var(--bad); border-color: rgba(255, 125, 145, 0.5); background: rgba(255, 125, 145, 0.13); }
+    .chip.info { color: var(--info); border-color: rgba(119, 179, 255, 0.5); background: rgba(119, 179, 255, 0.14); }
+
+    .stamp { color: var(--muted); font-size: 0.77rem; font-family: 'JetBrains Mono', monospace; }
+
+    h2 {
+      margin: 0 0 8px;
+      color: #d8e7ff;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.73rem;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    th, td {
+      text-align: left;
+      padding: 6px 5px;
+      border-bottom: 1px solid rgba(138, 164, 205, 0.2);
+      vertical-align: top;
+    }
+    th { color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; font-size: 0.62rem; }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+    .meter-wrap { display: grid; gap: 8px; }
+    .meter-row { display: grid; grid-template-columns: 120px 1fr 52px; gap: 8px; align-items: center; font-size: 0.8rem; }
+    .meter { height: 10px; border-radius: 999px; background: rgba(132, 154, 187, 0.15); border: 1px solid rgba(132, 154, 187, 0.28); overflow: hidden; }
+    .meter > span { display: block; height: 100%; background: linear-gradient(90deg, #6dddb1, #1db5dc); }
+
+    @media (max-width: 980px) {
+      .hero, .grid-2 { grid-template-columns: 1fr; }
+      .controls { justify-items: start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="panel hero">
+      <div>
+        <h1>Founder ACP Observability</h1>
+        <p class="subtitle">Live founder dashboard sourced from ACP stream files, OpenClaw sessions/model status, and Codex profile rotation registry.</p>
+      </div>
+      <div class="controls">
+        <div class="row">
+          <button id="refresh">Refresh</button>
+          <span class="chip info" id="apiChip">Loading</span>
+        </div>
+        <div class="stamp" id="generated">Waiting for first load...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>1. Active ACP Sessions</h2>
+      <div class="stamp" id="acpMeta">No data</div>
+      <div style="height:8px"></div>
+      <table id="acpTable"></table>
+    </section>
+
+    <section class="panel">
+      <h2>2. Profile Rotation Status</h2>
+      <div class="stamp" id="rotationMeta">No data</div>
+      <div style="height:8px"></div>
+      <table id="rotationTable"></table>
+    </section>
+
+    <section class="grid-2">
+      <article class="panel">
+        <h2>3. Agent Status</h2>
+        <div class="stamp" id="agentMeta">No data</div>
+        <div style="height:8px"></div>
+        <table id="agentTable"></table>
+      </article>
+      <article class="panel">
+        <h2>4. Provider Portfolio</h2>
+        <div class="stamp" id="providerMeta">No data</div>
+        <div style="height:8px"></div>
+        <div id="openaiMeters" class="meter-wrap"></div>
+        <div style="height:8px"></div>
+        <table id="providerTable"></table>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const fmtIso = (v) => (v ? new Date(v).toLocaleString() : 'n/a')
+    const fmtPct = (v) => (typeof v === 'number' && Number.isFinite(v) ? `${v}%` : 'n/a')
+    const fmtAge = (iso) => {
+      if (!iso) return 'n/a'
+      const ms = Date.now() - Date.parse(iso)
+      if (!Number.isFinite(ms)) return 'n/a'
+      const min = Math.floor(ms / 60000)
+      if (min < 60) return `${min}m`
+      const hr = Math.floor(min / 60)
+      if (hr < 24) return `${hr}h ${min % 60}m`
+      return `${Math.floor(hr / 24)}d ${hr % 24}h`
+    }
+
+    const API_BASE = window.location.hostname.includes('urclaw.com')
+      ? 'https://api.urclaw.com'
+      : 'http://localhost:8015';
+
+    async function fetchJson(path) {
+      const url = `${API_BASE}${path}`
+      const r = await fetch(url)
+      if (!r.ok) throw new Error(`HTTP ${r.status} ${url}`)
+      return { url, data: await r.json() }
+    }
+
+    function chipClassForStatus(status) {
+      if (status === 'healthy' || status === 'active' || status === 'available' || status === 'running') return 'good'
+      if (status === 'degraded' || status === 'idle' || status === 'constrained') return 'warn'
+      return 'bad'
+    }
+
+    function renderAcp(section) {
+      document.getElementById('acpMeta').textContent = `checked=${fmtIso(section?.checked_at)} | files=${section?.files_scanned ?? 'n/a'} | activeWindow=${section?.active_window_minutes ?? 'n/a'}m`
+      const rows = Array.isArray(section?.sessions) ? section.sessions : []
+      document.getElementById('acpTable').innerHTML = `
+        <thead><tr><th>Session Key</th><th>Agent</th><th>Last Event</th><th>Last Status Message</th><th>Running</th></tr></thead>
+        <tbody>
+          ${rows.map((r) => `
+            <tr>
+              <td class="mono">${r.session_key || 'n/a'}</td>
+              <td>${r.agent || 'unknown'}</td>
+              <td>${fmtIso(r.last_event_timestamp)} (${fmtAge(r.last_event_timestamp)})</td>
+              <td>${r.last_status_message || 'n/a'}</td>
+              <td><span class="chip ${r.is_running ? 'good' : 'warn'}">${r.is_running ? 'running' : 'idle'}</span></td>
+            </tr>
+          `).join('') || '<tr><td colspan="5">No ACP sessions modified in the last 2 hours.</td></tr>'}
+        </tbody>
+      `
+    }
+
+    function renderRotation(section) {
+      const log = Array.isArray(section?.rotation_log) ? section.rotation_log : []
+      const latestLog = log[log.length - 1]
+      document.getElementById('rotationMeta').textContent = `source=${section?.source || 'missing'} | active=${section?.active_profile || 'unknown'} | rotationLog=${log.length} | latest=${fmtIso(latestLog?.timestamp || latestLog?.at || latestLog?.checked_at)}`
+      const rows = Array.isArray(section?.profiles) ? section.profiles : []
+      document.getElementById('rotationTable').innerHTML = `
+        <thead><tr><th>Profile</th><th>Active</th><th>Email</th><th>5h %</th><th>Weekly %</th><th>Last Checked</th></tr></thead>
+        <tbody>
+          ${rows.map((r) => `
+            <tr>
+              <td class="mono">${r.id || 'unknown'}</td>
+              <td>${r.id === section?.active_profile ? '<span class="chip info">active</span>' : ''}</td>
+              <td class="mono">${r.email || 'n/a'}</td>
+              <td>${fmtPct(r.five_hour_pct)}</td>
+              <td>${fmtPct(r.weekly_pct)}</td>
+              <td>${fmtIso(r.last_checked)}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="6">No rotation profiles available.</td></tr>'}
+        </tbody>
+      `
+    }
+
+    function renderAgents(section) {
+      document.getElementById('agentMeta').textContent = `source=${section?.source || 'unknown'} | checked=${fmtIso(section?.checked_at)}`
+      const rows = Array.isArray(section?.agents) ? section.agents : []
+      document.getElementById('agentTable').innerHTML = `
+        <thead><tr><th>Agent</th><th>Last Active</th><th>Age</th></tr></thead>
+        <tbody>
+          ${rows.map((r) => `
+            <tr>
+              <td>${r.agent || 'unknown'}</td>
+              <td>${fmtIso(r.last_active_timestamp)}</td>
+              <td>${fmtAge(r.last_active_timestamp)}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="3">No agent status rows available.</td></tr>'}
+        </tbody>
+      `
+    }
+
+    function renderProviders(section) {
+      const usage = section?.openai_usage || {}
+      const cache = section?.cache || {}
+      document.getElementById('providerMeta').textContent = `source=${section?.source || 'unknown'} | checked=${fmtIso(section?.checked_at)} | cacheHit=${cache.hit ? 'yes' : 'no'}`
+      const pct5 = typeof usage.five_hour_pct_left === 'number' ? Math.max(0, Math.min(100, usage.five_hour_pct_left)) : 0
+      const pctW = typeof usage.weekly_pct_left === 'number' ? Math.max(0, Math.min(100, usage.weekly_pct_left)) : 0
+      document.getElementById('openaiMeters').innerHTML = `
+        <div class="meter-row"><div class="mono">OpenAI 5h</div><div class="meter"><span style="width:${pct5}%"></span></div><div>${fmtPct(usage.five_hour_pct_left)} ${usage.five_hour_time_left ? `(${usage.five_hour_time_left})` : ''}</div></div>
+        <div class="meter-row"><div class="mono">OpenAI Week</div><div class="meter"><span style="width:${pctW}%"></span></div><div>${fmtPct(usage.weekly_pct_left)} ${usage.weekly_time_left ? `(${usage.weekly_time_left})` : ''}</div></div>
+      `
+
+      const rows = Array.isArray(section?.providers) ? section.providers : []
+      document.getElementById('providerTable').innerHTML = `
+        <thead><tr><th>Provider</th><th>Configured</th><th>Health</th><th>Evidence</th></tr></thead>
+        <tbody>
+          ${rows.map((r) => `
+            <tr>
+              <td>${r.provider || 'unknown'}</td>
+              <td>${r.configured ? 'yes' : 'no'}</td>
+              <td><span class="chip ${chipClassForStatus(r.health)}">${r.health || 'unknown'}</span></td>
+              <td class="mono">${r.detail || 'n/a'}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4">No provider portfolio rows available.</td></tr>'}
+        </tbody>
+      `
+    }
+
+    async function load() {
+      const chip = document.getElementById('apiChip')
+      chip.className = 'chip info'
+      chip.textContent = 'Loading'
+
+      const { data } = await fetchJson('/api/founder/overview')
+
+      renderAcp(data.active_acp_sessions)
+      renderRotation(data.profile_rotation_status)
+      renderAgents(data.agent_status)
+      renderProviders(data.provider_portfolio)
+
+      chip.className = 'chip good'
+      chip.textContent = 'Live'
+      document.getElementById('generated').textContent = `Generated ${new Date().toLocaleString()} | apiBase=${API_BASE} | source=/api/founder/overview`
+    }
+
+    function showError(err) {
+      const chip = document.getElementById('apiChip')
+      chip.className = 'chip bad'
+      chip.textContent = 'Error'
+      document.getElementById('generated').textContent = `Load failed: ${err.message}`
+    }
+
+    document.getElementById('refresh').addEventListener('click', () => load().catch(showError))
+    load().catch(showError)
+    setInterval(() => load().catch(showError), 30000)
+  </script>
+</body>
+</html>
